@@ -1,0 +1,59 @@
+﻿@inherits LayoutComponentBase
+
+<MudThemeProvider @bind-IsDarkMode="_isDarkMode" @ref="_themeProvider" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="0">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@((e) => DrawerToggle())" />
+        <MudSpacer />
+        <MudIconButton OnClick="() => _isDarkMode = !_isDarkMode" Icon="@(_isDarkMode ? Icons.Material.Filled.LightMode : Icons.Material.Filled.DarkMode)"></MudIconButton>
+        <AuthorizeView>
+            <Authorized>
+                <MudAvatar Size="Size.Medium"><MudImage Alt="@context.User.Claims.FirstOrDefault(c => c.Type.Contains("givenname")).Value" Src="@context.User.Claims.FirstOrDefault(c => c.Type == "picture").Value"></MudImage></MudAvatar>
+            </Authorized>
+            <NotAuthorized>
+                <MudIconButton Title="Login mit Google" Href="/auth/google-login" Icon="@Icons.Custom.Brands.Google" />
+            </NotAuthorized>
+        </AuthorizeView>
+        </MudAppBar>
+    <MudDrawer @bind-Open="_drawerOpen" Elevation="1">
+        <MudDrawerHeader>
+            <MudText Typo="Typo.h6">MyBooks</MudText>
+        </MudDrawerHeader>
+        <NavMenu />
+    </MudDrawer>
+    <MudMainContent>
+        <MudContainer MaxWidth="MaxWidth.Large" Class="pt-4">
+            <AuthorizeView>
+                <Authorized>
+                    @Body
+                </Authorized>
+                <NotAuthorized>
+                    <MudText>Willkommen bei MyBooks, bitte melde dich mit hilfe von <MudLink Href="/auth/google-login">Google</MudLink> an!</MudText>
+                </NotAuthorized>
+            </AuthorizeView>
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    bool _drawerOpen = true;
+    bool _isDarkMode;
+    private MudThemeProvider _themeProvider;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _isDarkMode = await _themeProvider.GetSystemPreference();
+        }
+    }
+
+    void DrawerToggle()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+
+}

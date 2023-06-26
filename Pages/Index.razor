@@ -1,0 +1,34 @@
+﻿@page "/"
+@using Google.Apis.Books.v1.Data
+@inject BooksService BookService
+<MudText Typo="Typo.h6">Entdecke neue Bücher</MudText>
+
+<MudGrid Spacing="2" Justify="Justify.Center">
+    @if (Books != null && Books.TotalItems > 0)
+    {
+        @foreach (var book in Books.Items)
+        {
+            <MudCard>
+                <MudCardMedia Image="@book.VolumeInfo.ImageLinks.Thumbnail"/>
+                <MudCardContent>
+                    <MudText Typo="Typo.h6">@book.VolumeInfo.Title</MudText>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton StartIcon="@Icons.Material.Filled.Info" Variant="Variant.Text" Color="Color.Primary">Infos</MudButton>
+                </MudCardActions>
+            </MudCard>
+        }
+    }
+    
+</MudGrid>
+
+@code{
+
+    protected override async Task OnInitializedAsync()
+    {
+        Books = await BookService.Volumes.Recommended.;
+    }
+
+    public Volumes? Books { get; set; }
+
+}
