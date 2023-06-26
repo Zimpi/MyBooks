@@ -3,6 +3,7 @@ using Google.Apis.Books.v1;
 using Google.Apis.Services;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;
 using MudBlazor.Services;
+using MyBooks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,8 +12,7 @@ StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configurat
 // Add services to the container.
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
-builder.Services.AddSingleton(_ => new BooksService(new BaseClientService.Initializer
-    { ApplicationName = "MyBooks", ApiKey = "AIzaSyC6jcu6mnMvItYIH5_wkv1P27RgH21iBoo" }));
+builder.Services.AddSingleton(_ => BookServiceFactory.Initialize());
 builder.Services.AddMudServices();
 builder.Services.AddAuthentication("Cookies")
     .AddCookie(opt =>
