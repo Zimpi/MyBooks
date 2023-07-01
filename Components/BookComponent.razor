@@ -1,0 +1,44 @@
+﻿@using Google.Apis.Books.v1.Data
+@inject IDialogService DialogService
+
+@if (Book != null)
+{
+    <MudPaper Style="padding: 8px;" @onclick="ShowBookDetail" Elevation="2">
+        <MudGrid Justify="Justify.Center" Style="padding: 0">
+            <MudItem xs="4">
+                <MudImage Fluid="true" ObjectFit="ObjectFit.Cover" ObjectPosition="ObjectPosition.Center" Src="@Book.VolumeInfo?.ImageLinks?.Thumbnail"></MudImage>
+            </MudItem>
+            <MudItem xs="8">
+                <MudStack>
+                    <MudText Typo="Typo.h6">@Book.VolumeInfo?.Title</MudText>
+                    <MudText Typo="Typo.body2">Von: @(Book?.VolumeInfo?.Authors != null ? string.Join(", ", Book?.VolumeInfo?.Authors) : "Unbekannt")</MudText>
+                    <MudText Typo="Typo.body2">Vom: @(Book?.VolumeInfo?.PublishedDate)</MudText>
+                </MudStack>
+            </MudItem>
+        </MudGrid>
+    </MudPaper>
+}
+else
+{
+    <MudPaper Elevation="2" Width="128px" Height="190px">
+        <MudSkeleton Height="100%" Width="100%" Animation="Animation.Pulse" />
+    </MudPaper>
+}
+
+
+
+
+@code {
+
+    [Parameter]
+    public Volume? Book { get; set; }
+
+
+    private async Task ShowBookDetail()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Large, };
+        var dialogParameters = new DialogParameters { {"Book", Book} };
+        await DialogService.ShowAsync<BookDetailDialog>(Book.VolumeInfo.Title, dialogParameters, options); 
+    }
+
+}

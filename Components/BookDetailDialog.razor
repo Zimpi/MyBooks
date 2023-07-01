@@ -1,0 +1,54 @@
+﻿@using Google.Apis.Books.v1.Data
+@using System.Text.Json
+<MudDialog>
+    <DialogContent>
+        <MudGrid Justify="Justify.Center" >
+            <MudItem xs="4">
+                <MudStack>
+                    <MudImage Src="@Book?.VolumeInfo?.ImageLinks?.Thumbnail" Alt="Buchcover"></MudImage>
+                    <div>
+                        <MudText Typo="Typo.subtitle1">Seiten:</MudText>
+                        <MudText Typo="Typo.subtitle2">@(Book?.VolumeInfo?.PageCount ?? 0)</MudText>
+                    </div>
+                    <div>
+                        <MudText Typo="Typo.subtitle1">Autoren:</MudText>
+                            <MudText Typo="Typo.subtitle2">@(Book?.VolumeInfo?.Authors != null ? string.Join(", ", Book?.VolumeInfo?.Authors) : "Unbekannt")</MudText>
+                    </div>
+                    <div>
+                        <MudText Typo="Typo.subtitle1">Genre:</MudText>
+                            <MudText Typo="Typo.subtitle2">@(Book?.VolumeInfo?.Subtitle ?? "Unbekannt")</MudText>
+                    </div>
+                    <div>
+                        <MudText Typo="Typo.subtitle1">Bewertung:</MudText>
+                        <MudRating Color="Color.Primary" Size="Size.Small" ReadOnly="true" SelectedValue="@((int?)Book.VolumeInfo?.AverageRating ?? 0)" /> (@Book.VolumeInfo?.RatingsCount)
+                    </div>
+                </MudStack>
+            </MudItem>
+            <MudItem xs="8">
+                <MudContainer Style="max-height: 50vh; overflow-y: scroll;">
+                    <MudText Typo="Typo.body2">@((MarkupString)Book?.VolumeInfo?.Description)</MudText>
+                </MudContainer>
+            </MudItem>
+        </MudGrid>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Schließen</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [Parameter]
+    public Volume Book { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        var jsonString = JsonSerializer.Serialize(Book);
+        Console.WriteLine(jsonString);
+    }
+
+    void Cancel() => MudDialog.Cancel();
+}

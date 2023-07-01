@@ -1,15 +1,20 @@
 ﻿@page "/"
 @using Google.Apis.Books.v1.Data
+@using MyBooks.Components
 @inject BooksService BookService
-<MudText Typo="Typo.h6">Entdecke neue Bücher</MudText>
+@inject IDialogService DialogService
+
+    <MudText Style="margin-bottom: 14px" Typo="Typo.h5">Empfohlene Bücher</MudText>
+
+<title>MyBooks - Entdecken</title>
 
 @if (Recommended != null && Recommended.Items.Count > 0)
 {
-    <MudGrid Justify="Justify.Center" Spacing="3">
+    <MudGrid Spacing="5">
         @foreach (var reco in Recommended.Items)
         {
-            <MudItem>
-                <MudImage Elevation="1" ObjectFit="ObjectFit.Cover" ObjectPosition="ObjectPosition.Center" Src="@reco.VolumeInfo.ImageLinks.Thumbnail" Width="128"></MudImage>
+            <MudItem xs="12">
+                <BookComponent Book="reco"/>
             </MudItem>
         }
     </MudGrid>
@@ -17,27 +22,41 @@
 }
 else
 {
-    <MudGrid Justify="Justify.Center" Spacing="3">
-        <MudSkeleton Animation="Animation.Pulse" SkeletonType="SkeletonType.Rectangle" Width="128" Height="195px" />
-        <MudSkeleton Animation="Animation.Pulse" SkeletonType="SkeletonType.Rectangle" Width="128" Height="195px" />
-        <MudSkeleton Animation="Animation.Pulse" SkeletonType="SkeletonType.Rectangle" Width="128" Height="195px" />
-        <MudSkeleton Animation="Animation.Pulse" SkeletonType="SkeletonType.Rectangle" Width="128" Height="195px" />
-        <MudSkeleton Animation="Animation.Pulse" SkeletonType="SkeletonType.Rectangle" Width="128" Height="195px" />
-        <MudSkeleton Animation="Animation.Pulse" SkeletonType="SkeletonType.Rectangle" Width="128" Height="195px" />
-        <MudSkeleton Animation="Animation.Pulse" SkeletonType="SkeletonType.Rectangle" Width="128" Height="195px" />
-        <MudSkeleton Animation="Animation.Pulse" SkeletonType="SkeletonType.Rectangle" Width="128" Height="195px" />
-        <MudSkeleton Animation="Animation.Pulse" SkeletonType="SkeletonType.Rectangle" Width="128" Height="195px" />
-        <MudSkeleton Animation="Animation.Pulse" SkeletonType="SkeletonType.Rectangle" Width="128" Height="195px" />
-    </MudGrid>
+<MudGrid >
+    <MudItem xs="12">
+        <MudSkeleton Animation="Animation.Pulse" SkeletonType="SkeletonType.Rectangle" Width="128px" Height="195px" />
+    </MudItem>
+    <MudItem xs="12">
+        <MudSkeleton Animation="Animation.Pulse" SkeletonType="SkeletonType.Rectangle" Width="128px" Height="195px" />
+    </MudItem>
+        <MudItem xs="12">
+            <MudSkeleton Animation="Animation.Pulse" SkeletonType="SkeletonType.Rectangle" Width="128px" Height="195px" />
+        </MudItem>
+   
+</MudGrid>
 }
 
 @code {
 
-    public Volumes? Recommended { get; set; }
+    public Volumes? Recommended { get; set; } = null;
+
 
     protected override async Task OnInitializedAsync()
     {
-        Thread.Sleep(2000);
-        Recommended = await BookService.Volumes.Recommended.List().ExecuteAsync().ConfigureAwait(false);
+        await LoadRecommended();
     }
+
+    public async Task LoadRecommended()
+    {
+        Recommended = await BookService.Volumes.Recommended.List().ExecuteAsync();
+
+    }
+
+    private async Task ShowBookDetail(Volume book)
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Large, };
+        var dialogParameters = new DialogParameters { {"Book", book} };
+        await DialogService.ShowAsync<BookDetailDialog>(book.VolumeInfo.Title, dialogParameters, options);
+    }
+
 }

@@ -1,0 +1,33 @@
+﻿@page "/searchbooks"
+@using Google.Apis.Books.v1.Data
+@using Microsoft.AspNetCore.Components
+@using MyBooks.Components
+
+@inject BooksService BooksService
+
+<MudTextField Style="margin-bottom: 10px" Clearable="true" AutoFocus="true" InputType="InputType.Search" DebounceInterval="500" OnDebounceIntervalElapsed="SearchForBooks" @bind-Value="@_searchText" HelperText="@($"Suche nach {_searchText}...")" Label="Suche..." Variant="Variant.Text" Adornment="Adornment.End" AdornmentIcon="@Icons.Material.Filled.Search" AdornmentColor="Color.Primary" />
+
+<MudGrid Style="margin-top: 0;" Spacing="3">
+    @foreach (var reco in SearchedBooks)
+    {
+        <MudItem xs="12">
+            <BookComponent Book="reco"/>
+        </MudItem>
+    }
+</MudGrid>
+
+@code {
+    public IEnumerable<Volume> SearchedBooks { get; set; } = new List<Volume>();
+
+    private async Task SearchForBooks(string searchString)
+    {
+    // if text is null or empty, don't return values (drop-down will not open)
+        if (string.IsNullOrEmpty(searchString))
+            SearchedBooks = new List<Volume>();
+
+        var searchResult = await BooksService.Volumes.List(searchString).ExecuteAsync();
+        SearchedBooks = searchResult.Items;
+    }
+
+    private string? _searchText;
+}
