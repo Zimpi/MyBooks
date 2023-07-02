@@ -1,5 +1,89 @@
-﻿<h3>Profile</h3>
+﻿@page "/profile"
+@using System.Security.Claims
+@using Google.Apis.Books.v1.Data
+@inject AuthenticationStateProvider AuthenticationState
+@inject BooksService BookService
+
+@if (User != null)
+{
+    <MudText GutterBottom="true" Typo="Typo.h6">@Greeting, @User.Claims.FirstOrDefault(c => c.Type.Contains("givenname")).Value</MudText>
+
+    <MudStack Spacing="2">
+        <MudPaper Class="pa-4">
+            <MudStack Row="true">
+                <MudAvatar Size="Size.Large">
+                    <MudImage Alt="@User.Claims.FirstOrDefault(c => c.Type.Contains("givenname")).Value" Src="@User.Claims.FirstOrDefault(c => c.Type == "picture").Value"></MudImage>
+                </MudAvatar>
+                <MudStack Justify="Justify.Center" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.body1">@User.Identity.Name</MudText>
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+
+        <MudExpansionPanels Dense="true">
+            <MudExpansionPanel Text="Deine Bücherregale">
+                <MudStack Class="pa-4" Row="true" Style="overflow-x: scroll;">
+                    @if (MyBookShelves != null)
+                    {
+                        @foreach (var shelf in MyBookShelves)
+                        {
+                            <MudPaper Style="min-width: 120px">
+                                <MudStack>
+                                    <MudPaper Class="mt-3" Elevation="0" Style="display: flex; justify-content: center; align-items:center">
+                                        <MudIcon Icon="@Icons.Material.Filled.List" Size="Size.Large"/>
+                                    </MudPaper>
+                                    <div class="pa-3">
+                                        <MudText Typo="Typo.body1">@shelf.Title</MudText>
+                                        <MudText Typo="Typo.body2">Bücher:@(shelf.VolumeCount ?? 0)</MudText>
+                                    </div>
+                                </MudStack>
+                            </MudPaper>
+                        }
+                        <MudPaper Style="min-width: 120px" Class="d-flex justify-center align-center" Outlined="true">
+                            <MudIcon Icon="@Icons.Material.Filled.Add" Size="Size.Large" />
+                        </MudPaper>
+                    }
+                </MudStack>
+            </MudExpansionPanel>
+        </MudExpansionPanels>
+    </MudStack>
+}
+else
+{
+    <MudProgressCircular Indeterminate="true" />
+}
+
 
 @code {
+
+    private string[] _unvalidShelfIds = new[] { "9", "8", "7", "6", "5", "4", "3", "2", "1" };
+    private string Greeting
+    {
+        get
+        {
+            var time = DateTime.Now;
+            var hour = time.Hour;
+            return hour switch
+            {
+                >= 4 and < 12 => "Guten Morgen",
+                >= 12 and < 18 => "Guten Tag",
+                >= 18 or <= 4 => "Guten Abend"
+            };
+        }
+    }
+
+    public List<Bookshelf>? MyBookShelves { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authenticationState = await AuthenticationState.GetAuthenticationStateAsync();
+        User = authenticationState.User;
+
+        var allBookshelves = await BookService.Mylibrary.Bookshelves.List().ExecuteAsync();
+        MyBookShelves = allBookshelves.Items.Where(s => !_unvalidShelfIds.Contains(s.Id.ToString())).ToList();
+    }
+
+    public ClaimsPrincipal? User { get; set; }
 
 }

@@ -1,73 +1,138 @@
 ﻿@using Google.Apis.Books.v1.Data
-@using System.Text.Json
 @inject BooksService BookService
 
 <MudDialog>
     <DialogContent>
-        <MudGrid Justify="Justify.Center">
-            <MudItem xs="4">
-                <MudStack>
-                    <MudImage Src="@Book?.VolumeInfo?.ImageLinks?.Thumbnail" Alt="Buchcover"></MudImage>
-                    <div>
-                        <MudText Typo="Typo.subtitle1">Seiten:</MudText>
-                        <MudText Typo="Typo.subtitle2">@(Book?.VolumeInfo?.PageCount ?? 0)</MudText>
-                        </div>
-                        <div>
-                            <MudText Typo="Typo.subtitle1">Autoren:</MudText>
-                            <MudText Typo="Typo.subtitle2">@(Book?.VolumeInfo?.Authors != null ? string.Join(", ", Book?.VolumeInfo?.Authors) : "Unbekannt")</MudText>
-                        </div>
-                        <div>
-                            <MudText Typo="Typo.subtitle1">Genre:</MudText>
-                            <MudText Typo="Typo.subtitle2">@(Book?.VolumeInfo?.Subtitle ?? "Unbekannt")</MudText>
-                        </div>
-                        <div>
-                            <MudText Typo="Typo.subtitle1">Bewertung:</MudText>
-                            <MudRating Color="Color.Primary" Size="Size.Small" ReadOnly="true" SelectedValue="@((int?)Book.VolumeInfo?.AverageRating ?? 0)" /> (@Book.VolumeInfo?.RatingsCount)
-                        </div>
-                    </MudStack>
-                </MudItem>
-                <MudItem xs="8">
-                    <MudContainer Style="max-height: 50vh; overflow-y: scroll;">
-                        <MudText Typo="Typo.body2">@((MarkupString)Book?.VolumeInfo?.Description)</MudText>
-                    </MudContainer>
-                </MudItem>
-            </MudGrid>
-        </DialogContent>
+        <MudTabs Style="Width: 100%" PanelClass="pa-6">
+            <MudTabPanel Text="Infos">
+                <MudGrid Justify="Justify.Center">
+                    <MudItem xs="4">
+                        <MudStack>
+                            <MudImage Src="@Book?.VolumeInfo?.ImageLinks?.Thumbnail" Alt="Buchcover"></MudImage>
+                            <div>
+                                <MudText Typo="Typo.subtitle1">Seiten:</MudText>
+                                <MudText Typo="Typo.subtitle2">@(Book?.VolumeInfo?.PageCount ?? 0)</MudText>
+                            </div>
+                            <div>
+                                <MudText Typo="Typo.subtitle1">Autoren:</MudText>
+                                <MudText Typo="Typo.subtitle2">@(Book?.VolumeInfo?.Authors != null ? string.Join(", ", Book?.VolumeInfo?.Authors) : "Unbekannt")</MudText>
+                            </div>
+                            <div>
+                                <MudText Typo="Typo.subtitle1">Genre:</MudText>
+                                <MudText Typo="Typo.subtitle2">@(Book?.VolumeInfo?.Subtitle ?? "Unbekannt")</MudText>
+                            </div>
+                            <div>
+                                <MudText Typo="Typo.subtitle1">Bewertung:</MudText>
+                                <MudRating Color="Color.Primary" Size="Size.Small" ReadOnly="true" SelectedValue="@((int?)Book.VolumeInfo?.AverageRating ?? 0)"/> (@Book.VolumeInfo?.RatingsCount)
+                            </div>
+                        </MudStack>
+                    </MudItem>
+                    <MudItem xs="8">
+                        <MudContainer Style="max-height: 50vh; overflow-y: scroll;">
+                            <MudText Typo="Typo.body2">@((MarkupString)(Book?.VolumeInfo?.Description ?? "Keine Beschreibung verfügbar..."))</MudText>
+                        </MudContainer>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+            <MudTabPanel Text="Regale">
+                <MudText Typo="Typo.body1">Verwalte die Regale in denen dieses Buch steht</MudText>
+                @if (MyBookShelves != null)
+                {
+                    <MudChipSet @bind-SelectedChips="@SelectedBookshelves" MultiSelection="true" Filter="true">
+                        @foreach (var shelf in MyBookShelves)
+                        {
+                            @if (shelf?.Id != null)
+                            {
+                                <MudChip SelectedColor="Color.Success" OnClick="@(() => AddRemoveBookToShelf(shelf))" Value="shelf" Default="@_defaultCheckedBookshelves.Contains(shelf.Id.ToString())" Text="@shelf.Title"></MudChip>
+                            }
+                        }
+                    </MudChipSet>
+                }
+                else
+                {
+                    <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+                }
+                
+            </MudTabPanel>
+            
+        </MudTabs>
+        
+    </DialogContent>
         <DialogActions>
-            <MudToggleIconButton Disabled="@(Liked == null)" ToggledColor="Color.Error" Title="Gefällt mir noch nicht" ToggledTitle="Gefällt mir!" ToggledChanged="BookLikeChanged" Color="Color.Primary" Toggled="@(Liked ?? false)" Icon="@Icons.Material.Outlined.FavoriteBorder" ToggledIcon="@Icons.Material.Outlined.Favorite" />
+            @if (Liked == null)
+            {
+                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+            }
+            else
+            {
+                <MudToggleIconButton Disabled="@(Liked == null)" ToggledColor="Color.Error" Title="Gefällt mir noch nicht" ToggledTitle="Gefällt mir!" ToggledChanged="BookLikeChanged" Color="Color.Primary" Toggled="@(Liked ?? false)" Icon="@Icons.Material.Outlined.FavoriteBorder" ToggledIcon="@Icons.Material.Outlined.Favorite" />
+            }
         <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="Cancel" />
     </DialogActions>
 </MudDialog>
 
 @code {
 
-    [CascadingParameter] MudDialogInstance MudDialog { get; set; }
+    [CascadingParameter] MudDialogInstance? MudDialog { get; set; }
     [Parameter]
-    public Volume Book { get; set; }
+    public Volume? Book { get; set; }
 
     public bool? Liked { get; set; }
 
-    protected override async Task OnInitializedAsync()
+    public MudChip[] SelectedBookshelves
     {
-        MyBookShelves = await BookService.Mylibrary.Bookshelves.List().ExecuteAsync();
+        get => _selectedBookshelves;
+        set
+        {
 
-        var isFavorised = await IsBookFavorised();
-        Liked = isFavorised;
+            var addedChips = value.Except(_selectedBookshelves ?? Array.Empty<MudChip>()).ToList();
+            var removedChips = _selectedBookshelves?.Except(value).ToList() ?? new List<MudChip>();
+
+            _selectedBookshelves = value;
+        }
     }
 
-    public Bookshelves? MyBookShelves { get; set; }
+    private List<string> _defaultCheckedBookshelves = new();
+
+    private string[] _unvalidShelfIds = new[] { "9", "8", "7", "6", "5", "4", "3", "2", "1" };
+    private MudChip[] _selectedBookshelves;
+    public List<Bookshelf>? MyBookShelves { get; set; }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var allBookshelves = await BookService.Mylibrary.Bookshelves.List().ExecuteAsync();
+        MyBookShelves = allBookshelves.Items.Where(s => !_unvalidShelfIds.Contains(s.Id.ToString())).ToList();
+        if (MyBookShelves != null)
+        {
+            foreach (var myBookShelf in MyBookShelves.Where(b => !_unvalidShelfIds.Contains(b.Id.ToString())).ToList())
+            {
+                if (await IsBookInBookshelve(myBookShelf.Id.ToString()))
+                {
+                    _defaultCheckedBookshelves.Add(myBookShelf.Id.ToString());
+                    if (myBookShelf.Id.ToString() == "0")
+                    {
+                        Liked = true;
+                    }
+                }
+            }
+        }
+        Liked ??= false;
+        await InvokeAsync(StateHasChanged);
+    }
+
 
     private async Task<bool> IsBookFavorised()
     {
         return await IsBookInBookshelve("0");
     }
 
-    void Cancel() => MudDialog.Cancel();
+    void Cancel() => MudDialog?.Cancel();
 
     private async Task<bool> IsBookInBookshelve(string shelfId)
     {
         var booksInShelf = await BookService.Mylibrary.Bookshelves.Volumes.List(shelfId).ExecuteAsync();
-        var favoBook = booksInShelf?.Items?.SingleOrDefault(b => b.Id == Book.Id);
+        var favoBook = booksInShelf?.Items?.SingleOrDefault(b => b.Id == Book?.Id);
         return favoBook != null;
     }
 
@@ -78,7 +143,7 @@
         {
             if (!isFavorised)
             {
-                await BookService.Mylibrary.Bookshelves.AddVolume("0", Book.Id).ExecuteAsync();
+                await BookService.Mylibrary.Bookshelves.AddVolume("0", Book?.Id).ExecuteAsync();
                 Liked = true;
             }
         }
@@ -86,11 +151,26 @@
         {
             if (isFavorised)
             {
-                await BookService.Mylibrary.Bookshelves.RemoveVolume("0", Book.Id).ExecuteAsync();
+                await BookService.Mylibrary.Bookshelves.RemoveVolume("0", Book?.Id).ExecuteAsync();
                 Liked = false;
             }
         }
         await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task AddRemoveBookToShelf(Bookshelf shelf)
+    {
+        var added = SelectedBookshelves.SingleOrDefault(c => ((Bookshelf)c.Value).Id == shelf.Id) != null;
+
+        if (added)
+        {
+            await BookService.Mylibrary.Bookshelves.AddVolume(shelf.Id.ToString(), Book.Id).ExecuteAsync();
+        }
+        else
+        {
+            await BookService.Mylibrary.Bookshelves.RemoveVolume(shelf.Id.ToString(), Book.Id).ExecuteAsync();
+        }
+
     }
 
 }

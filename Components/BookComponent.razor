@@ -6,7 +6,16 @@
     <MudPaper Style="padding: 8px;" @onclick="ShowBookDetail" Elevation="2">
         <MudGrid Justify="Justify.Center" Style="padding: 0">
             <MudItem xs="4">
-                <MudImage Fluid="true" ObjectFit="ObjectFit.Cover" ObjectPosition="ObjectPosition.Center" Src="@Book.VolumeInfo?.ImageLinks?.Thumbnail"></MudImage>
+                @if (Book?.VolumeInfo?.ImageLinks?.Thumbnail != null)
+                {
+                    <MudImage Elevation="2" Fluid="true" ObjectFit="ObjectFit.Cover" ObjectPosition="ObjectPosition.Center" Src="@Book.VolumeInfo?.ImageLinks?.Thumbnail"></MudImage>
+                }
+                else
+                {
+                    <MudPaper Style="display: flex; justify-content: center; align-items: center;" Elevation="2" Height="100%" Width="100%">
+                        <MudIcon Icon="@Icons.Material.Filled.Book"/>
+                    </MudPaper>
+                }
             </MudItem>
             <MudItem xs="8">
                 <MudStack>

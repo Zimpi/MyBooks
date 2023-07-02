@@ -1,5 +1,6 @@
 ﻿@inherits LayoutComponentBase
-
+@inject BooksService BookService
+@inject NavigationManager NavManager
 
 <MudThemeProvider @bind-IsDarkMode="_isDarkMode" @ref="_themeProvider" Theme="MyBooksTheme"/>
 <MudDialogProvider/>
@@ -12,7 +13,7 @@
         <MudIconButton Href="/searchbooks" Icon="@Icons.Material.Filled.Search"/>
         <AuthorizeView>
             <Authorized>
-                <MudAvatar Size="Size.Medium">
+                <MudAvatar @onclick="@(() => NavManager.NavigateTo("/profile"))" Size="Size.Medium">
                     <MudImage Alt="@context.User.Claims.FirstOrDefault(c => c.Type.Contains("givenname")).Value" Src="@context.User.Claims.FirstOrDefault(c => c.Type == "picture").Value"></MudImage>
                 </MudAvatar>
             </Authorized>
