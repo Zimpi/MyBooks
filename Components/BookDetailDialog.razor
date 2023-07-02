@@ -1,38 +1,41 @@
 ﻿@using Google.Apis.Books.v1.Data
 @using System.Text.Json
+@inject BooksService BookService
+
 <MudDialog>
     <DialogContent>
-        <MudGrid Justify="Justify.Center" >
+        <MudGrid Justify="Justify.Center">
             <MudItem xs="4">
                 <MudStack>
                     <MudImage Src="@Book?.VolumeInfo?.ImageLinks?.Thumbnail" Alt="Buchcover"></MudImage>
                     <div>
                         <MudText Typo="Typo.subtitle1">Seiten:</MudText>
                         <MudText Typo="Typo.subtitle2">@(Book?.VolumeInfo?.PageCount ?? 0)</MudText>
-                    </div>
-                    <div>
-                        <MudText Typo="Typo.subtitle1">Autoren:</MudText>
+                        </div>
+                        <div>
+                            <MudText Typo="Typo.subtitle1">Autoren:</MudText>
                             <MudText Typo="Typo.subtitle2">@(Book?.VolumeInfo?.Authors != null ? string.Join(", ", Book?.VolumeInfo?.Authors) : "Unbekannt")</MudText>
-                    </div>
-                    <div>
-                        <MudText Typo="Typo.subtitle1">Genre:</MudText>
+                        </div>
+                        <div>
+                            <MudText Typo="Typo.subtitle1">Genre:</MudText>
                             <MudText Typo="Typo.subtitle2">@(Book?.VolumeInfo?.Subtitle ?? "Unbekannt")</MudText>
-                    </div>
-                    <div>
-                        <MudText Typo="Typo.subtitle1">Bewertung:</MudText>
-                        <MudRating Color="Color.Primary" Size="Size.Small" ReadOnly="true" SelectedValue="@((int?)Book.VolumeInfo?.AverageRating ?? 0)" /> (@Book.VolumeInfo?.RatingsCount)
-                    </div>
-                </MudStack>
-            </MudItem>
-            <MudItem xs="8">
-                <MudContainer Style="max-height: 50vh; overflow-y: scroll;">
-                    <MudText Typo="Typo.body2">@((MarkupString)Book?.VolumeInfo?.Description)</MudText>
-                </MudContainer>
-            </MudItem>
-        </MudGrid>
-    </DialogContent>
-    <DialogActions>
-        <MudButton OnClick="Cancel">Schließen</MudButton>
+                        </div>
+                        <div>
+                            <MudText Typo="Typo.subtitle1">Bewertung:</MudText>
+                            <MudRating Color="Color.Primary" Size="Size.Small" ReadOnly="true" SelectedValue="@((int?)Book.VolumeInfo?.AverageRating ?? 0)" /> (@Book.VolumeInfo?.RatingsCount)
+                        </div>
+                    </MudStack>
+                </MudItem>
+                <MudItem xs="8">
+                    <MudContainer Style="max-height: 50vh; overflow-y: scroll;">
+                        <MudText Typo="Typo.body2">@((MarkupString)Book?.VolumeInfo?.Description)</MudText>
+                    </MudContainer>
+                </MudItem>
+            </MudGrid>
+        </DialogContent>
+        <DialogActions>
+            <MudToggleIconButton Disabled="@(Liked == null)" ToggledColor="Color.Error" Title="Gefällt mir noch nicht" ToggledTitle="Gefällt mir!" ToggledChanged="BookLikeChanged" Color="Color.Primary" Toggled="@(Liked ?? false)" Icon="@Icons.Material.Outlined.FavoriteBorder" ToggledIcon="@Icons.Material.Outlined.Favorite" />
+        <MudIconButton Icon="@Icons.Material.Filled.Close" OnClick="Cancel" />
     </DialogActions>
 </MudDialog>
 
@@ -42,13 +45,52 @@
     [Parameter]
     public Volume Book { get; set; }
 
-    protected override void OnInitialized()
-    {
-        base.OnInitialized();
+    public bool? Liked { get; set; }
 
-        var jsonString = JsonSerializer.Serialize(Book);
-        Console.WriteLine(jsonString);
+    protected override async Task OnInitializedAsync()
+    {
+        MyBookShelves = await BookService.Mylibrary.Bookshelves.List().ExecuteAsync();
+
+        var isFavorised = await IsBookFavorised();
+        Liked = isFavorised;
+    }
+
+    public Bookshelves? MyBookShelves { get; set; }
+
+    private async Task<bool> IsBookFavorised()
+    {
+        return await IsBookInBookshelve("0");
     }
 
     void Cancel() => MudDialog.Cancel();
+
+    private async Task<bool> IsBookInBookshelve(string shelfId)
+    {
+        var booksInShelf = await BookService.Mylibrary.Bookshelves.Volumes.List(shelfId).ExecuteAsync();
+        var favoBook = booksInShelf?.Items?.SingleOrDefault(b => b.Id == Book.Id);
+        return favoBook != null;
+    }
+
+    private async Task BookLikeChanged(bool liked)
+    {
+        var isFavorised = await IsBookFavorised();
+        if (liked)
+        {
+            if (!isFavorised)
+            {
+                await BookService.Mylibrary.Bookshelves.AddVolume("0", Book.Id).ExecuteAsync();
+                Liked = true;
+            }
+        }
+        else
+        {
+            if (isFavorised)
+            {
+                await BookService.Mylibrary.Bookshelves.RemoveVolume("0", Book.Id).ExecuteAsync();
+                Liked = false;
+            }
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
 }

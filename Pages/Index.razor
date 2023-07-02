@@ -10,7 +10,7 @@
 
 @if (Recommended != null && Recommended.Items.Count > 0)
 {
-    <MudGrid Spacing="5">
+    <MudGrid Spacing="2">
         @foreach (var reco in Recommended.Items)
         {
             <MudItem xs="12">
@@ -22,18 +22,23 @@
 }
 else
 {
-<MudGrid >
-    <MudItem xs="12">
-        <MudSkeleton Animation="Animation.Pulse" SkeletonType="SkeletonType.Rectangle" Width="128px" Height="195px" />
-    </MudItem>
-    <MudItem xs="12">
-        <MudSkeleton Animation="Animation.Pulse" SkeletonType="SkeletonType.Rectangle" Width="128px" Height="195px" />
-    </MudItem>
+    <MudGrid >
         <MudItem xs="12">
-            <MudSkeleton Animation="Animation.Pulse" SkeletonType="SkeletonType.Rectangle" Width="128px" Height="195px" />
+            <BookComponentSkel/>
         </MudItem>
-   
-</MudGrid>
+        <MudItem xs="12">
+            <BookComponentSkel />
+        </MudItem>
+        <MudItem xs="12">
+            <BookComponentSkel/>
+        </MudItem>
+        <MudItem xs="12">
+            <BookComponentSkel/>
+        </MudItem>
+        <MudItem xs="12">
+            <BookComponentSkel />
+        </MudItem>
+    </MudGrid>
 }
 
 @code {
