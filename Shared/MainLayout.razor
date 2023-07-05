@@ -7,22 +7,34 @@
 <MudSnackbarProvider/>
 
 <MudLayout>
-    <MudAppBar Bottom="true" Fixed="true" Elevation="1">
+    <MudPaper Class="customNavMenuPaper">
+        <MudNavMenu Bordered="true" Class="customNavMenu">
+            <MudNavLink Class="customNavLink" Match="NavLinkMatch.All" Href="/" Icon="@Icons.Material.Filled.House" />
+            <MudNavLink Class="customNavLink" Href="/searchbooks" Icon="@Icons.Material.Filled.Search" />
+            <AuthorizeView>
+                <Authorized>
+                    <MudNavLink Class="customNavLink" Href="/profile" Icon="@Icons.Material.Filled.Person" />
+                </Authorized>
+                <NotAuthorized>
+                    <MudNavLink Class="customNavLink" Title="Login mit Google" Href="/auth/google-login" Icon="@Icons.Custom.Brands.Google" />
+                </NotAuthorized>
+            </AuthorizeView>
+        </MudNavMenu>
+    </MudPaper>
+    @*<MudAppBar Bottom="true" Fixed="true" Elevation="1">
         <MudSpacer/>
         <MudIconButton Href="/" Icon="@Icons.Material.Filled.House"/>
         <MudIconButton Href="/searchbooks" Icon="@Icons.Material.Filled.Search"/>
         <AuthorizeView>
             <Authorized>
-                <MudAvatar @onclick="@(() => NavManager.NavigateTo("/profile"))" Size="Size.Medium">
-                    <MudImage Alt="@context.User.Claims.FirstOrDefault(c => c.Type.Contains("givenname")).Value" Src="@context.User.Claims.FirstOrDefault(c => c.Type == "picture").Value"></MudImage>
-                </MudAvatar>
+                <MudIconButton Href="/profile" Icon="@Icons.Material.Filled.Person" />
             </Authorized>
             <NotAuthorized>
                 <MudIconButton Title="Login mit Google" Href="/auth/google-login" Icon="@Icons.Custom.Brands.Google"/>
             </NotAuthorized>
         </AuthorizeView>
         <MudSpacer/>
-    </MudAppBar>
+    </MudAppBar>*@
     <MudMainContent Style="padding-top: 14px; padding-bottom: calc((var(--mud-appbar-height) - var(--mud-appbar-height)/8) + 8px);">
         <MudContainer>
             <AuthorizeView>
